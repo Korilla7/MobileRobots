@@ -58,7 +58,7 @@ def ransac(data_xy, max_iterations, threshold, min_inliers):
     return best_line, best_inliers
 
 
-json_data = open('line_detection_1.json')
+json_data = open('line_localization_1.json')
 data = json.load(json_data)
 
 xi = np.arange(0,512)
@@ -75,16 +75,17 @@ data_xy = [(x, y) for x, y in data_xy if all(math.isfinite(val) for val in (x, y
 
 max_iterations = 100
 threshold = 0.01
-min_inliers = 20
+min_inliers = 100
 wall_point_array_x = []
 wall_point_array_y = []
 walls_x = []
 walls_y = []
 num_of_walls = 0
 it=0
+two_axis = []
 
 while len(data_xy) >= min_inliers:
-    if it > 100:
+    if it>100:
         break
 
     best_line, inliers = ransac(data_xy, max_iterations, threshold, min_inliers)
@@ -95,7 +96,8 @@ while len(data_xy) >= min_inliers:
         wall_point_array_x.append(inlier_x)
         wall_point_array_y.append(inlier_y)
         data_xy = [point for point in data_xy if point not in inliers]
-        a, b = best_line 
+        a, b = best_line
+        two_axis.append([a,b])
         wall_x = inlier_x
         wall_y = [a * idx + b for idx in wall_x]
         walls_x.append(wall_x)
@@ -103,7 +105,7 @@ while len(data_xy) >= min_inliers:
         num_of_walls = num_of_walls + 1
     else:
         it = it + 1
-plt.scatter(x, y, label='All Points', color='gray', marker='o')
+# plt.scatter(x, y, label='All Points', color='gray', marker='o')
 
 cmap = get_cmap('tab10')
 colors = cycle(cmap.colors)
@@ -111,12 +113,37 @@ colors = cycle(cmap.colors)
 i = 0
 while i < len(wall_point_array_x):
     color = next(colors)
-    plt.scatter(wall_point_array_x[i], wall_point_array_y[i], label="Inliers of wall " + str(i), color=color, marker='o')
+    # plt.scatter(wall_point_array_x[i], wall_point_array_y[i], label="Inliers of wall " + str(i), color=color, marker='o')
     plt.plot(walls_x[i], walls_y[i], label="Best estimated Wall " + str(i), color=color)
     i = i+1
 
+a1,b1 = two_axis[0]
+a2,b2 = two_axis[1]
+intersection_point=[(b2-b1) / (a1-a2), a1*((b2-b1) / (a1-a2)) + b1]
+
+plt.plot(intersection_point[0],intersection_point[1], label='Intersection Point', color='gray', marker='o')
+plt.plot(0, 0, label='Robot Cooridnates', color='Black', marker='o')
 plt.xlabel('X')
 plt.ylabel('Y')
 plt.axis('equal')
+plt.legend()
+plt.show()
+
+
+x_coords = abs(a1 * 0 - 0 + b1) / np.sqrt(a1**2 + 1)
+y_coords = abs(a2 * 0 - 0 + b2) / np.sqrt(a2**2 + 1)
+print(x_coords, y_coords)
+orientation = math.degrees(math.atan2(y_coords, x_coords))
+print(orientation)
+
+x_coords_1 = abs(a2 * 0 - 0 + b2) / np.sqrt(a2**2 + 1)
+y_coords_1 = abs(a1 * 0 - 0 + b1) / np.sqrt(a1**2 + 1)
+print(x_coords_1, y_coords_1)
+orientation_1 = math.degrees(math.atan2(y_coords_1, x_coords_1))
+print(orientation_1)
+
+plt.plot(x_coords, y_coords, label='Robot Cooridnates', color='Black',marker='o')
+plt.xlim([0,1])
+plt.ylim([0,1])
 plt.legend()
 plt.show()
