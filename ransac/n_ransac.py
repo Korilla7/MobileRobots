@@ -58,7 +58,7 @@ def ransac(data_xy, max_iterations, threshold, min_inliers):
     return best_line, best_inliers
 
 
-json_data = open('line_localization_1.json')
+json_data = open('line_localization_2.json')
 data = json.load(json_data)
 
 xi = np.arange(0,512)
