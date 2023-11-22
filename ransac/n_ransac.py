@@ -58,7 +58,7 @@ def ransac(data_xy, max_iterations, threshold, min_inliers):
     return best_line, best_inliers
 
 
-json_data = open('line_localization_2.json')
+json_data = open('line_detection_2.json')
 data = json.load(json_data)
 
 xi = np.arange(0,512)
@@ -142,7 +142,8 @@ print(x_coords_1, y_coords_1)
 orientation_1 = math.degrees(math.atan2(y_coords_1, x_coords_1))
 print(orientation_1)
 
-plt.plot(x_coords, y_coords, label='Robot Cooridnates', color='Black',marker='o')
+robot_coor_label = f"Robot Odoemtry {x_coords:.3f}, {y_coords:.3f}, {orientation:.3f}"
+plt.plot(x_coords, y_coords, label=robot_coor_label, color='Black',marker='o')
 plt.xlim([0,1])
 plt.ylim([0,1])
 plt.legend()
