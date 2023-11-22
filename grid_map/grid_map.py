@@ -41,6 +41,11 @@ plt.xlabel('X')
 plt.ylabel('Y')
 plt.axis('equal')
 
+scans_in_global_x = []
+scans_in_global_y = []
+min_x = 0
+min_y = 0
+
 for data_scan, data_pose in zip(scan_arr, pose_arr):
     plt.scatter(data_pose[0], data_pose[1], color = "red")
     delta_x = data_pose[0] - ref_x
@@ -51,7 +56,39 @@ for data_scan, data_pose in zip(scan_arr, pose_arr):
         rotated_y = x * math.sin(math.radians(delta_theta)) + y * math.cos(math.radians(delta_theta))
         x = rotated_x + delta_x
         y = rotated_y + delta_y
-        plt.scatter(x,y, color="black")
+        if x < min_x:
+            min_x = x
+        if y < min_y:
+            min_y = y 
+        scans_in_global_x.append(x)
+        scans_in_global_y.append(y)
+        #plt.scatter(x,y, color="black")
+#plt.show()
 
+max_x = 0
+max_y = 0
+for i in range(len(scans_in_global_x)):
+    scans_in_global_x[i] = scans_in_global_x[i] + abs(min_x)
+    if scans_in_global_x[i] > max_x:
+        max_x = scans_in_global_x[i]
+
+for i in range(len(scans_in_global_y)):
+    scans_in_global_y[i] = scans_in_global_y[i] + abs(min_y)
+    if scans_in_global_y[i] > max_y:
+        max_y = scans_in_global_y[i]
+
+grid_map = [[0] * 200] * 200
+for data_x in scans_in_global_x:
+    i = int(data_x * 10)
+    for data_y in scans_in_global_x:
+        j = int(data_y * 10)
+        grid_map[i][j] = 1
+
+for i in range(200):
+    for j in range(200):
+        if grid_map[i][j] == 1:
+            plt.scatter(i,j, color="green")
+        else:
+            plt.scatter(i,j, color="grey")
 
 plt.show()
