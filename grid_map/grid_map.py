@@ -13,7 +13,7 @@ def pol2cart(rho, phi):
     return(x,y)
 
 
-json_data = open('./grid_map/map_sonar_round.json') #./grid_map/map_boxes_0.json
+json_data = open('./map_sonar_round.json') #./grid_map/map_boxes_0.json
 data_loaded = json.load(json_data)
 
 pose_arr = []
@@ -37,17 +37,13 @@ ref_x = pose_arr[0][0] + 0.18
 ref_y = pose_arr[0][1]
 ref_theta = pose_arr[0][2]
 
-plt.xlabel('X')
-plt.ylabel('Y')
-plt.axis('equal')
-
 scans_in_global_x = []
 scans_in_global_y = []
 min_x = 0
 min_y = 0
 
 for data_scan, data_pose in zip(scan_arr, pose_arr):
-    plt.scatter(data_pose[0], data_pose[1], color = "red")
+    # plt.scatter(data_pose[0], data_pose[1], color = "red")
     delta_x = data_pose[0] - ref_x
     delta_y = data_pose[1] - ref_y
     delta_theta = data_pose[2] - ref_theta
@@ -62,33 +58,25 @@ for data_scan, data_pose in zip(scan_arr, pose_arr):
             min_y = y 
         scans_in_global_x.append(x)
         scans_in_global_y.append(y)
-        #plt.scatter(x,y, color="black")
-#plt.show()
+#         plt.scatter(x,y, color="black")
+# plt.show()
 
-max_x = 0
-max_y = 0
-for i in range(len(scans_in_global_x)):
-    scans_in_global_x[i] = scans_in_global_x[i] + abs(min_x)
-    if scans_in_global_x[i] > max_x:
-        max_x = scans_in_global_x[i]
+map_width = 150
+map_length = 150
+zero_point = int(map_length/2)
+grid_map = [[0] * map_width for _ in range(map_length)]
 
-for i in range(len(scans_in_global_y)):
-    scans_in_global_y[i] = scans_in_global_y[i] + abs(min_y)
-    if scans_in_global_y[i] > max_y:
-        max_y = scans_in_global_y[i]
+for i, j in zip(scans_in_global_x, scans_in_global_y):
+    x_coord = int(i*10)+zero_point
+    y_coord = int(j*10)+zero_point
+    grid_map[x_coord][y_coord] = 1
 
-grid_map = [[0] * 200] * 200
-for data_x in scans_in_global_x:
-    i = int(data_x * 10)
-    for data_y in scans_in_global_x:
-        j = int(data_y * 10)
-        grid_map[i][j] = 1
+x, y = np.where(np.array(grid_map) == 1)
+plt.scatter(x, y, color="red")
 
-for i in range(200):
-    for j in range(200):
-        if grid_map[i][j] == 1:
-            plt.scatter(i,j, color="green")
-        else:
-            plt.scatter(i,j, color="grey")
+x, y = np.where(np.array(grid_map) == 0)
+plt.scatter(x, y, color="grey")
 
+plt.xlabel('X')
+plt.ylabel('Y')
 plt.show()
