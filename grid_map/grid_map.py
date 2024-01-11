@@ -1,11 +1,8 @@
-import random
+
 import numpy as np
 import json
 import math
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
-from itertools import cycle
-
 
 def pol2cart(rho, phi):
     x = rho * np.cos(phi)
@@ -42,7 +39,7 @@ def bresenham_line(x1, y1, x2, y2):
     return points
 
 
-json_data = open('./map_sonar_round.json') #./grid_map/map_boxes_0.json
+json_data = open('./map_sonar_round.json')
 data_loaded = json.load(json_data)
 
 pose_arr = []
@@ -71,7 +68,6 @@ scans_in_global_x = []
 scans_in_global_y = []
 
 for data_scan, data_pose in zip(scan_arr, pose_arr):
-    # plt.scatter(data_pose[0], data_pose[1], color = "red")
     delta_x = data_pose[0] - ref_x
     delta_y = data_pose[1] - ref_y
     delta_theta = data_pose[2] - ref_theta
@@ -83,37 +79,30 @@ for data_scan, data_pose in zip(scan_arr, pose_arr):
 
         scans_in_global_x.append(x)
         scans_in_global_y.append(y)
-#         plt.scatter(x,y, color="black")
-# plt.show()
 
-map_width = 120
-map_length = 120
-zero_point_x = int(map_width/2)
-zero_point_y = int(map_length/2)
-grid_map = [[50] * map_width for _ in range(map_length)]
+    map_width = 250
+    map_length = 250
+    zero_point_x = int(map_width/2)
+    zero_point_y = int(map_length/2)
+    grid_map = [[0.5] * map_width for _ in range(map_length)]
+    resolution = 0.05
+
+    unique_points = set(zip(scans_in_global_x, scans_in_global_y))
+    for i, j in unique_points:
+        x_coord = int(i/resolution) + zero_point_x
+        y_coord = int(j/resolution) + zero_point_y
+        line_points = bresenham_line(zero_point_x, zero_point_y, x_coord, y_coord)
+        for point in line_points:
+            grid_map[point[0]][point[1]] = grid_map[point[0]][point[1]]*0.5
+        grid_map[x_coord][y_coord] = 0.99
 
 
-for i, j in zip(scans_in_global_x, scans_in_global_y):
-    x_coord = int(i)*10 + zero_point_x
-    y_coord = int(j)*10 + zero_point_y
-    line_points = bresenham_line(zero_point_x, zero_point_y, x_coord, y_coord)
-    for point in line_points:
-        grid_map[point[0]][point[1]] = 5
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.axis('equal')
+
+    plt.imshow(grid_map, interpolation="nearest",cmap='Blues')
+    plt.pause(0.1)
     
-    grid_map[x_coord][y_coord] = 95
-x, y = np.where(np.array(grid_map) == 50)
-plt.scatter(x, y, color="grey")
-
-x, y = np.where(np.array(grid_map) == 5)
-plt.scatter(x, y, color="white")
-
-x, y = np.where(np.array(grid_map) == 95)
-plt.scatter(x, y, color="black")
-
-
-
-
-plt.xlabel('X')
-plt.ylabel('Y')
-plt.axis('equal')
+plt.colorbar()
 plt.show()
