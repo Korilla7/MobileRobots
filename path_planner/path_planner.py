@@ -5,11 +5,16 @@ import math
 import copy
 import matplotlib.pyplot as plt
 
-MAP_WIDTH = 250
-MAP_LENGTH = 250
-RESOLUTION = 0.1
-GOAL_X = -4
-GOAL_Y = 6
+MAP_WIDTH = 50 
+# MAP_WIDTH = 250
+MAP_LENGTH = 50 
+# MAP_LENGTH = 250
+RESOLUTION = 0.5
+# RESOLUTION = 0.1
+GOAL_X = -2
+# GOAL_X = -4
+GOAL_Y = 4
+# GOAL_Y = 6
 
 def pol2cart(rho, phi):
     x = rho * np.cos(phi)
@@ -42,7 +47,7 @@ def wavefront_planning(path_map, start):
             current = next_cell
             path.append(current)
         else:
-            print("No valid neighbors found. Stopping the wavefront planning.")
+            # print("No valid neighbors found. Stopping the wavefront planning.")
             break
     return path 
 
@@ -75,8 +80,6 @@ ref_theta = pose_arr[0][2]
 
 zero_point_x = int(MAP_WIDTH / 2)
 zero_point_y = int(MAP_LENGTH / 2)
-start_x= int(ref_x / RESOLUTION) + zero_point_x
-start_y = int(ref_y / RESOLUTION) + zero_point_y
 scans_in_global_x = []
 scans_in_global_y = []
 
@@ -85,6 +88,8 @@ for data_scan, data_pose in zip(path_map_list, pose_arr):
     delta_x = data_pose[0] - ref_x
     delta_y = data_pose[1] - ref_y
     delta_theta = data_pose[2] - ref_theta
+    start_x= int(delta_x / RESOLUTION) + zero_point_x
+    start_y = int(delta_y / RESOLUTION) + zero_point_y
     for x, y in data_scan:
         rotated_x = x * math.cos(math.radians(delta_theta)) - y * math.sin(math.radians(delta_theta))
         rotated_y = x * math.sin(math.radians(delta_theta)) + y * math.cos(math.radians(delta_theta))
@@ -101,41 +106,42 @@ for data_scan, data_pose in zip(path_map_list, pose_arr):
         x_coord = int(i / RESOLUTION) + zero_point_x
         y_coord = int(j / RESOLUTION) + zero_point_y
         path_map[x_coord][y_coord] = np.inf
-        path_map_fake[x_coord][y_coord] = np.inf 
-        #Making artificial obstacles
-        if 1 < x_coord < MAP_WIDTH-2:
-            path_map_fake[x_coord+1][y_coord] = np.inf
-            path_map_fake[x_coord-1][y_coord] = np.inf
-            path_map_fake[x_coord+2][y_coord] = np.inf
-            path_map_fake[x_coord-2][y_coord] = np.inf
-        if 1 < y_coord < MAP_LENGTH-2:
-            path_map_fake[x_coord][y_coord+1] = np.inf
-            path_map_fake[x_coord][y_coord-1] = np.inf
-            path_map_fake[x_coord][y_coord+2] = np.inf
-            path_map_fake[x_coord][y_coord-2] = np.inf
-        if 1 < x_coord < MAP_WIDTH-2 and 1 < y_coord < MAP_LENGTH-2:
-            path_map_fake[x_coord-1][y_coord+1] = np.inf
-            path_map_fake[x_coord-1][y_coord-1] = np.inf
-            path_map_fake[x_coord+1][y_coord+1] = np.inf
-            path_map_fake[x_coord+1][y_coord-1] = np.inf
+        path_map_fake[x_coord][y_coord] = np.inf
+
+        # #Making artificial obstacles
+        # if 1 < x_coord < MAP_WIDTH-2:
+        #     path_map_fake[x_coord+1][y_coord] = np.inf
+        #     path_map_fake[x_coord-1][y_coord] = np.inf
+        #     path_map_fake[x_coord+2][y_coord] = np.inf
+        #     path_map_fake[x_coord-2][y_coord] = np.inf
+        # if 1 < y_coord < MAP_LENGTH-2:
+        #     path_map_fake[x_coord][y_coord+1] = np.inf
+        #     path_map_fake[x_coord][y_coord-1] = np.inf
+        #     path_map_fake[x_coord][y_coord+2] = np.inf
+        #     path_map_fake[x_coord][y_coord-2] = np.inf
+        # if 1 < x_coord < MAP_WIDTH-2 and 1 < y_coord < MAP_LENGTH-2:
+        #     path_map_fake[x_coord-1][y_coord+1] = np.inf
+        #     path_map_fake[x_coord-1][y_coord-1] = np.inf
+        #     path_map_fake[x_coord+1][y_coord+1] = np.inf
+        #     path_map_fake[x_coord+1][y_coord-1] = np.inf
 
     path = wavefront_planning(path_map_fake, (start_x, start_y))
-    path_x, path_y = zip(*path)
 
     for x in range(MAP_WIDTH):
         for y in range(MAP_LENGTH):
             if (x,y) in path:
                 path_map[x][y] = 50
-            if path_map[x][y] is None:
-                path_map[x][y] = 0
+            elif path_map[x][y] is None:
+                path_map[x][y] = 10
             else:
                 path_map[x][y] = 100
 
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.axis('equal')
-
-    plt.imshow(path_map, interpolation="none",cmap='Greys')
+    # cmap = plt.cm.get_cmap('viridis', 3)
+    # plt.imshow(path_map, cmap=cmap, interpolation='nearest')
+    plt.imshow(path_map, interpolation="nearest", cmap='Greys')
     plt.pause(0.1)
 
 plt.colorbar()
