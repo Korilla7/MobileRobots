@@ -1,8 +1,9 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist, Point
-from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist, Point, PoseStamped
+from nav_msgs.msg import Odometry, Path
 import numpy as np
+from numpy import float32
 import time
 import math
 
@@ -27,11 +28,11 @@ class VelocityPublisher(Node):
         self.pose_subscriber = self.create_subscription(Odometry, '/PIONIER6/RosAria/pose', self.pose_callback, 10)
         self.get_logger().info('Pose subscriber has been started.')
 
-        self.path_subscriber = self.create_subscription(Twist, '/path_topic', self.path_callback, 10)
+        self.path_subscriber = self.create_subscription(Path, '/seba_niko/path', self.path_callback, 10)
         self.get_logger().info('Path subscriber has been started.')
 
         
-        self.grid_path = [(0, 0), (1, 0), (1, 1), (2, 1)] # Subscriberem? Importem?
+        self.grid_path = Path()
         self.current_coordinate_index = 0
         self.new_path_flag = 0
         self.initial_position = True
@@ -57,7 +58,7 @@ class VelocityPublisher(Node):
         self.publisher_.publish(velocity_command)
         self.get_logger().info('Published velocity command: linear={}, angular={}'.format(
             velocity_command.linear.x, velocity_command.angular.z))
-    
+
     def path_callback(self, msg):
         # self.new_path_flag = 1
         self.grid_path = msg
@@ -76,7 +77,10 @@ class VelocityPublisher(Node):
     
     def control_robot(self):
         target_position = Point()
-        target_position.x, target_position.y = self.grid_path[self.current_coordinate_index]
+        # target_position.x, target_position.y = self.grid_path[self.current_coordinate_index]
+
+        target_position.x = self.grid_path.poses[self.current_coordinate_index].pose.position.x
+        target_position.y = self.grid_path.poses[self.current_coordinate_index].pose.position.y
 
         # Calculate linear velocity (assuming constant speed)
         linear_velocity = 0.5
@@ -85,7 +89,7 @@ class VelocityPublisher(Node):
         target_angle = math.atan2(target_position.y - self.current_position[0], target_position.x - self.current_position[1])
         angular_error = target_angle - self.current_yaw
 
-        # Update integral term
+        # Update integral error
         self.error_integral += angular_error
 
         # Calculate angular velocity using PI controller
